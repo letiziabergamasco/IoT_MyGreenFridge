@@ -54,85 +54,6 @@ class ThingSpeakDataManager:
 		elif(msg.topic == "MyGreenFridge/"+str(self.user_ID)+"/"+str(self.fridge_ID)+"/humidity"):
 			self.value_h = message
 
-	#def update_temperature(temperature):
-	#    try:
-	#        print("I AM HERE: 1")
-	#        data = urllib.request.urlopen("https://api.thingspeak.com/update?api_key="+self.fridgeAPI+"&field1="+str(temperature))
-	#        print("Temperature value updated on ThingSpeak: "+str(temperature))
-	#    except:
-	#        print("An exception occurred")
-
-	#def update_humidity(humidity):
-	#    print("I AM HERE: 2")
-	#    data = urllib.request.urlopen("https://api.thingspeak.com/update?api_key="+self.fridgeAPI+"&field2="+str(humidity))
-	#    print("Humidity value updated on ThingSpeak: "+str(humidity))
-		#self.tsdm.value_h = None
-
-class TemperatureThread(threading.Thread):
-	def __init__(self, tsdm, userID, fridgeID, fridgeAPI, catalog_URL):
-		threading.Thread.__init__(self)
-		self.tsdm = tsdm
-		self.userID = userID
-		self.fridgeID = fridgeID
-		self.fridgeAPI = fridgeAPI
-		self.catalog_url = catalog_URL
-
-	def run(self):
-		while True:
-
-			topic_t = "MyGreenFridge/"+str(self.userID)+"/"+str(self.fridgeID)+"/temperature"
-			self.tsdm.mySubscribe(topic_t)
-			if (self.tsdm.value_t):
-				data_t = urllib.request.urlopen("https://api.thingspeak.com/update?api_key="+self.fridgeAPI+"&field1="+str(self.tsdm.value_t))
-				print("Temperature value updated on ThingSpeak: "+str(self.tsdm.value_t))
-				self.tsdm.value_t = None
-
-			time.sleep(15)
-
-class HumidityThread(threading.Thread):
-	def __init__(self, tsdm, userID, fridgeID, fridgeAPI, catalog_URL):
-		threading.Thread.__init__(self)
-		self.tsdm = tsdm
-		self.userID = userID
-		self.fridgeID = fridgeID
-		self.fridgeAPI = fridgeAPI
-		self.catalog_URL = catalog_URL
-
-	def run(self):
-		while True:
-			topic_h = "MyGreenFridge/"+str(self.userID)+"/"+str(self.fridgeID)+"/humidity"
-			self.tsdm.mySubscribe(topic_h)
-			if (self.tsdm.value_h):
-				data_h = urllib.request.urlopen("https://api.thingspeak.com/update?api_key="+self.fridgeAPI+"&field2="+str(self.tsdm.value_h))
-				print("Humidity value updated on ThingSpeak: "+str(self.tsdm.value_h))
-				self.tsdm.value_h = None
-
-			time.sleep(15)
-
-class WastedThread(threading.Thread):
-	
-	def __init__(self, fridgeID, fridgeAPI, catalog_URL):
-		
-		threading.Thread.__init__(self)
-		self.fridgeID = fridgeID
-		self.fridgeAPI = fridgeAPI
-		self.catalog_URL = catalog_URL
-
-	def run(self):
-		while True:
-			# Taking the wasted products here
-			try:
-				r3 = requests.get(self.catalog_URL+"wasted?Fridge_ID="+self.fridgeID)
-				wasted_json = r3.json()
-				value = len(wasted_json["Wasted_products"])
-				data = urllib.request.urlopen("https://api.thingspeak.com/update?api_key="+self.fridgeAPI+"&field3="+str(value))
-				print ("Wasted products updated on ThingSpeak")
-			
-			except requests.RequestException as err:
-
-				sys.exit("ERROR: did not find the list of wasted products")
-
-			time.sleep(15)
 
 class ThingSpeakThread(threading.Thread):
 	
@@ -161,22 +82,19 @@ class ThingSpeakThread(threading.Thread):
 				wasted_json = r3.json()
 				value_wasted = len(wasted_json["Wasted_products"])
 
-				#value = len(wasted_json["Wasted_products"])
-				#data = urllib.request.urlopen("https://api.thingspeak.com/update?api_key="+self.fridgeAPI+"&field3="+str(value))
 				print ("Wasted products retrieved")
 			
 			except requests.RequestException as err:
 				print("ERROR: did not find the list of wasted products")
 
 			try:
-			#if (self.tsdm.value_h):
+			
 				data_h = urllib.request.urlopen("https://api.thingspeak.com/update?api_key="+self.fridgeAPI+
 					"&field1="+str(self.tsdm.value_t) +
 					"&field2="+str(self.tsdm.value_h) +
 					"&field3="+str(value_wasted))
 				print("Values updated on ThingSpeak")
-				#self.tsdm.value_h = None
-				#self.tsdm.value_t = None
+
 			except:
 				print("ERROR: could not update the values on ThingSpeak")
 
@@ -241,9 +159,6 @@ class ControlThread(threading.Thread):
 				# get new fridges that have been added
 				diffFridges = list(set(currFridges) - set(oldFridges))
 
-				#listThreads = threading.enumerate()
-				#print(listThreads)
-
 				for fridge_ID in diffFridges:
 
 					for f in dictCurrFridges["fridges"]:
@@ -258,12 +173,7 @@ class ControlThread(threading.Thread):
 
 							tsdm = ThingSpeakDataManager(client_ID, userID, fridgeID, brokerIP, brokerPort)
 							tsdm.start()
-							#tempThread = TemperatureThread(tsdm, userID, fridgeID, fridgeAPI, catalogURL)
-							#tempThread.start()
-							#humThread = HumidityThread(tsdm, userID, fridgeID, fridgeAPI, catalogURL)
-							#humThread.start()
-							#wastThread = WastedThread(fridgeID, fridgeAPI, catalogURL)
-							#wastThread.start()
+
 							tsThread = ThingSpeakThread(tsdm, userID, fridgeID, fridgeAPI, catalog_URL)
 							tsThread.start()
 
@@ -289,8 +199,7 @@ if __name__ == "__main__":
 	except OSError:
 		sys.exit("ERROR: cannot open the configuration file.")
 
-	#userID = configDict['userID']
-	#fridges = configDict['fridges']
+
 	catalogIP = configDict['catalogIP']
 	catalogPort = configDict['catalogPort']
 
@@ -302,6 +211,7 @@ if __name__ == "__main__":
 	s.connect(("8.8.8.8", 80))
 	devIP = s.getsockname()[0]
 	devPort = 8676
+	
 	nameWS = "ThingSpeakAdaptorWS"
 	# register the web service on the Catalog
 	regThread = RegistrationThread(catalogIP, catalogPort, devIP, devPort, nameWS)
@@ -318,13 +228,6 @@ if __name__ == "__main__":
 		print("Broker port is: " + str(brokerPort))
 	except requests.RequestException as err:
 		sys.exit("ERROR: cannot retrieve the Broker IP from the Catalog.")
-
-	# #fridges = []
-	# try:
-	#     r2 = requests.get(catalogURL + "/fridges")
-	#     fridges = r2.json()
-	# except requests.RequestException as err:
-	#     sys.exit("ERROR: cannot retrieve the info about the fridges.")
 
 	initFridges = []
 
