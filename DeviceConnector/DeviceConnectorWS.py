@@ -90,8 +90,11 @@ class TemperatureThread(threading.Thread):
 
 		def run(self):
 			while True:
-				Tsenml = deviceConnector.get_temperature()
-				msg = json.dumps(Tsenml)
+				try:
+					Tsenml = deviceConnector.get_temperature()
+					msg = json.dumps(Tsenml)
+				except:
+					print("Error in retrieving temperature value.")
 				topic = "MyGreenFridge/"+str(deviceConnector.userID)+"/"+str(deviceConnector.fridgeID)+"/temperature"
 				deviceConnectorMQTT.myPublish(topic, msg)
 				time.sleep(15)
@@ -103,8 +106,11 @@ class HumidityThread(threading.Thread):
 
 		def run(self):
 			while True:
-				Hsenml = deviceConnector.get_humidity()
-				msg = json.dumps(Hsenml)
+				try:
+					Hsenml = deviceConnector.get_humidity()
+					msg = json.dumps(Hsenml)
+				except:
+					print("Error in retrieving humidity value.")
 				topic = "MyGreenFridge/"+str(deviceConnector.userID)+"/"+str(deviceConnector.fridgeID)+"/humidity"
 				deviceConnectorMQTT.myPublish(topic, msg)
 				time.sleep(15)
@@ -116,8 +122,11 @@ class Camera0Thread(threading.Thread):
 
 		def run(self):
 			while True:
-				C0senml = deviceConnector.get_camera0()
-				msg = json.dumps(C0senml)
+				try:
+					C0senml = deviceConnector.get_camera0()
+					msg = json.dumps(C0senml)
+				except:
+					print("Error in retrieving camera0 value.")
 				topic = "MyGreenFridge/"+str(deviceConnector.userID)+"/"+str(deviceConnector.fridgeID)+"/camera0"
 				deviceConnectorMQTT.myPublish(topic, msg)
 				time.sleep(10)
@@ -129,8 +138,11 @@ class Camera1Thread(threading.Thread):
 
 		def run(self):
 			while True:
-				C1senml = deviceConnector.get_camera1()
-				msg = json.dumps(C1senml)
+				try:
+					C1senml = deviceConnector.get_camera1()
+					msg = json.dumps(C1senml)
+				except:
+					print("Error in retrieving camera1 value.")
 				topic = "MyGreenFridge/"+str(deviceConnector.userID)+"/"+str(deviceConnector.fridgeID)+"/camera1"
 				deviceConnectorMQTT.myPublish(topic, msg)
 				time.sleep(10)
