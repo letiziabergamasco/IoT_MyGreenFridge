@@ -18,7 +18,7 @@ class ProductOutputREST(object):
 	def GET (self, *uri, **params):
 		if (len(uri)!=1):
 			raise cherrypy.HTTPError(404, "Error: wrong number of uri")
-		# /delete_product?userID=<IDuser>&Fridge_ID=<FridgeID>&product_name=<name>&brands=<brand>
+
 		elif (uri[0] == "delete_product"):
 			Fridge_ID = params["FridgeID"]
 			userID = params["userID"]
@@ -80,7 +80,6 @@ class RegistrationThread(threading.Thread):
 if __name__ == '__main__':
 
 
-	# standard configuration
 	conf = {
 		'/': {
 			'request.dispatch': cherrypy.dispatch.MethodDispatcher(),
@@ -88,11 +87,10 @@ if __name__ == '__main__':
 		}
 	}
 
-	# get IP address of ProductInputWS
 	s = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
 	s.connect(("8.8.8.8", 80))
 	devIP = s.getsockname()[0]
-	devPort = 8691 #inserire numero porta per prod Output ws
+	devPort = 8691 
 
 	try:
 		configFile = open("../configSystem.json", "r")
@@ -114,12 +112,10 @@ if __name__ == '__main__':
 	bot_Token = info2["token"]
 	file2.close()
 
-	# register ProductOutputREST as a web service
 	regThread = RegistrationThread(catalogIP, catalogPort, devIP, devPort)
 	regThread.start()
 
 
-	# deploy the BarcodeConversionREST class and start the web server
 	cherrypy.tree.mount(ProductOutputREST(bot_Token,catalog_URL), '/', conf)
 	cherrypy.config.update({'server.socket_host': '0.0.0.0'})
 	cherrypy.config.update({'server.socket_port': devPort})

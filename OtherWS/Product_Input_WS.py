@@ -19,7 +19,7 @@ class ProductInputREST(object):
 	def GET (self, *uri, **params):
 		if (len(uri) != 1):
 			raise cherrypy.HTTPError(404, "Error: wrong number of uri")
-		# /insert_product?userID=<IDuser>&Fridge_ID=<FridgeID>&product_name=<name>&brands=<brand>
+
 		elif (uri[0] == "insert_product"):
 			Fridge_ID = params["FridgeID"]
 			userID = params["userID"]
@@ -40,7 +40,6 @@ class ProductInputREST(object):
 			print(Fridge_ID)
 
 			print ("A new product to insert in the fridge has been received")
-			# richiesta BOT
 
 			r2 = requests.get('https://api.telegram.org/bot' + self.bot_Token + '/sendMessage?chat_id=' + str(ID_bot) +
 										  '&text=' + 'The product ' + str(product_ID) + ' has been added in the fridge ' + str(Fridge_ID) + 
@@ -70,7 +69,6 @@ class RegistrationThread(threading.Thread):
 			url = "http://"+ catalogIP + ":"+ catalogPort + "/"
 			while True:
 
-				### register BarcodeConversionREST as a web service
 				dictWS = {"name": ("ProductInputWS"),
 									"IP": devIP,
 									"port": devPort}
@@ -94,11 +92,10 @@ if __name__ == '__main__':
 		}
 	}
 
-	# get IP address of ProductInputWS
 	s = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
 	s.connect(("8.8.8.8", 80))
 	devIP = s.getsockname()[0]
-	devPort = 8690 #inserire numero porta per prod input ws
+	devPort = 8690 
 
 	try:
 		configFile = open("../configSystem.json", "r")
@@ -120,12 +117,10 @@ if __name__ == '__main__':
 	bot_Token = info2["token"]
 	file2.close()
 
-	# register ProductInputREST as a web service
 	regThread = RegistrationThread(catalogIP, catalogPort, devIP, devPort)
 	regThread.start()
 
 
-	# deploy the BarcodeConversionREST class and start the web server
 	cherrypy.tree.mount(ProductInputREST(bot_Token,catalog_URL), '/', conf)
 	cherrypy.config.update({'server.socket_host': '0.0.0.0'})
 	cherrypy.config.update({'server.socket_port': devPort})
