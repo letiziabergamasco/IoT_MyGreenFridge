@@ -52,7 +52,7 @@ class ProductsController:
 			EANBytes = barcodes[0].data
 			EANcode = EANBytes.decode() # convert bytes into string
 		else:
-			EANcode = None #??
+			EANcode = None
 
 		print("EAN code is: " + str(EANcode))
 
@@ -102,13 +102,12 @@ class ProductsControlMQTT:
 
 		imageString = ((message["e"])[0])["v"]
 
+		# imageString is received on topicSubscribe and stored in productsController
 		self.productsController.updateImage(imageString)
 
-		# imageString is received on topicSubscribe and stored in productsControlMQTT.productsController
-		#imageString = self.productsControlMQTT.productsController.getImage()
-
 				
-		# publish EANcode corresponding to imageString on the relative topic EAN0
+		### publish EANcode corresponding to imageString on the relative topic EAN0
+		
 		topicPublish = "MyGreenFridge/" + self.userID + "/" + self.fridgeID + "/" + self.topicEnd
 
 
@@ -182,48 +181,20 @@ class ProductsThread(threading.Thread):
 			self.catalogIP = catalogIP
 			self.catalogPort = catalogPort
 			self.topicEnd = topicEnd
-			#self.threadID = threadID
 
 
 		def run(self):
 
-			# subscribe to the topic related to camera0
-			topicSubscribe = "MyGreenFridge/" + self.userID + "/" + self.fridgeID + "/" + self.sensorID
-			self.productsControlMQTT.mySubscribe(topicSubscribe)
-
 			url = "http://"+ self.catalogIP + ":"+ self.catalogPort + "/update_sensor?Fridge_ID=" + self.fridgeID
 
 			while True:
+
+				# subscribe to the topic related to camera0/camera1
+				topicSubscribe = "MyGreenFridge/" + self.userID + "/" + self.fridgeID + "/" + self.sensorID
+				self.productsControlMQTT.mySubscribe(topicSubscribe)
 				
 				# # imageString is received on topicSubscribe and stored in productsControlMQTT.productsController
 				imageString = self.productsControlMQTT.productsController.getImage()
-
-				
-				# # publish EANcode corresponding to imageString on the relative topic EAN0
-				# topicPublish = "MyGreenFridge/" + self.userID + "/" + self.fridgeID + "/" + self.topicEnd
-
-
-				# try:
-				# 	# get EANcode from imageString	
-				# 	EANcode = self.productsControlMQTT.productsController.imageToEan(imageString)
-				
-				# except: # catch all exceptions
-
-				# 	# if the EAN code cannot be retrieved, print an error
-				# 	e = sys.exc_info()[0]
-				# 	print("Invalid EAN code for user " + self.userID + " .")
-				# 	print(e)
-				# 	EANcode = None
-
-				# # EAN0: EANcode
-				# messageDict = {self.topicEnd: EANcode}
-				# messageJson = json.dumps(messageDict)
-				
-				# # publish on topic EAN0 only if there is a valid EAN code
-				# if EANcode != None:
-				# 	# publish on topicPublish
-				# 	self.productsControlMQTT.myPublish(topicPublish, messageJson)
-
 
 				# update sensor information on the Catalog
 				dictC0 = {"sensor_ID": self.sensorID,
@@ -276,26 +247,7 @@ def mainFunct(catalogIP, catalogPort, devIP, devPort, nameWS, sensorID, topicEnd
 	regThread = RegistrationThread(catalogIP, catalogPort, devIP, devPort, nameWS)
 	regThread.start()
 
-
-	# # retrieve all the fridges from the Catalog
-	# r2 = requests.get(catalogURL + "/fridges")
-	# fridges = r2.json() # fridges is a Python dictionary
-
-
-	# # iterate over all the fridges
-	# for fridge in fridges["fridges"]:
-		
-	# 	userID =  fridge["user"]
-	# 	fridgeID = fridge["ID"]
-	# 	clientID = nameWS + "_" + userID + "_" + fridgeID
-
-	# 	productsController = ProductsController()
-	# 	productsControlMQTT = ProductsControlMQTT(clientID, brokerIP, brokerPort, productsController, userID, fridgeID, sensorID, catalogIP, catalogPort, topicEnd)
-	# 	productsControlMQTT.start()
-
-	# 	prodThread = ProductsThread(productsControlMQTT, userID, fridgeID, sensorID, catalogIP, catalogPort, topicEnd)
-	# 	prodThread.start()
-
+	# initialize the list of fridges as an empty list
 	initFridges = []
 
 	controlThread = ControlThread(catalogIP, catalogPort, initFridges, nameWS, sensorID, topicEnd, brokerIP, brokerPort)
@@ -336,10 +288,8 @@ class ControlThread(threading.Thread):
 
 				# get new fridges that have been added
 				diffFridges = list(set(currFridges) - set(oldFridges))
-
-				#listThreads = threading.enumerate()
-				#print(listThreads)
 				
+				# start what is needed for those fridges
 				for fridgeID in diffFridges:
 
 					for fridge in dictCurrFridges["fridges"]:
@@ -358,5 +308,7 @@ class ControlThread(threading.Thread):
 
 				
 				time.sleep(60*60)
+
+				# update list of fridges
 				oldFridges = currFridges.copy()
 
