@@ -120,7 +120,7 @@ class Camera0Thread(threading.Thread):
 				msg = json.dumps(C0senml)
 				topic = "MyGreenFridge/"+str(deviceConnector.userID)+"/"+str(deviceConnector.fridgeID)+"/camera0"
 				deviceConnectorMQTT.myPublish(topic, msg)
-				time.sleep(5)
+				time.sleep(10)
 
 class Camera1Thread(threading.Thread):
 
@@ -133,7 +133,7 @@ class Camera1Thread(threading.Thread):
 				msg = json.dumps(C1senml)
 				topic = "MyGreenFridge/"+str(deviceConnector.userID)+"/"+str(deviceConnector.fridgeID)+"/camera1"
 				deviceConnectorMQTT.myPublish(topic, msg)
-				time.sleep(5)
+				time.sleep(10)
 
 class RegistrationThread(threading.Thread):
 
