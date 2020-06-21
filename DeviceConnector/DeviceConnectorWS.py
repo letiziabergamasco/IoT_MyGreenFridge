@@ -85,189 +85,190 @@ class DeviceConnectorMQTT:
 
 class TemperatureThread(threading.Thread):
 
-        def __init__(self, deviceConnector, deviceConnectorMQTT):
-            threading.Thread.__init__(self)
+		def __init__(self, deviceConnector, deviceConnectorMQTT):
+			threading.Thread.__init__(self)
 
-        def run(self):
-            while True:
-                Tsenml = deviceConnector.get_temperature()
-                msg = json.dumps(Tsenml)
-                topic = "MyGreenFridge/"+str(deviceConnector.userID)+"/"+str(deviceConnector.fridgeID)+"/temperature"
-                deviceConnectorMQTT.myPublish(topic, msg)
-                time.sleep(15)
+		def run(self):
+			while True:
+				Tsenml = deviceConnector.get_temperature()
+				msg = json.dumps(Tsenml)
+				topic = "MyGreenFridge/"+str(deviceConnector.userID)+"/"+str(deviceConnector.fridgeID)+"/temperature"
+				deviceConnectorMQTT.myPublish(topic, msg)
+				time.sleep(15)
 
 class HumidityThread(threading.Thread):
 
-        def __init__(self, deviceConnector, deviceConnectorMQTT):
-            threading.Thread.__init__(self)
+		def __init__(self, deviceConnector, deviceConnectorMQTT):
+			threading.Thread.__init__(self)
 
-        def run(self):
-            while True:
-                Hsenml = deviceConnector.get_humidity()
-                msg = json.dumps(Hsenml)
-                topic = "MyGreenFridge/"+str(deviceConnector.userID)+"/"+str(deviceConnector.fridgeID)+"/humidity"
-                deviceConnectorMQTT.myPublish(topic, msg)
-                time.sleep(15)
+		def run(self):
+			while True:
+				Hsenml = deviceConnector.get_humidity()
+				msg = json.dumps(Hsenml)
+				topic = "MyGreenFridge/"+str(deviceConnector.userID)+"/"+str(deviceConnector.fridgeID)+"/humidity"
+				deviceConnectorMQTT.myPublish(topic, msg)
+				time.sleep(15)
 
 class Camera0Thread(threading.Thread):
 
-        def __init__(self, deviceConnector, deviceConnectorMQTT):
-            threading.Thread.__init__(self)
+		def __init__(self, deviceConnector, deviceConnectorMQTT):
+			threading.Thread.__init__(self)
 
-        def run(self):
-            while True:
-                C0senml = deviceConnector.get_camera0()
-                msg = json.dumps(C0senml)
-                topic = "MyGreenFridge/"+str(deviceConnector.userID)+"/"+str(deviceConnector.fridgeID)+"/camera0"
-                deviceConnectorMQTT.myPublish(topic, msg)
-                time.sleep(5)
+		def run(self):
+			while True:
+				C0senml = deviceConnector.get_camera0()
+				msg = json.dumps(C0senml)
+				topic = "MyGreenFridge/"+str(deviceConnector.userID)+"/"+str(deviceConnector.fridgeID)+"/camera0"
+				deviceConnectorMQTT.myPublish(topic, msg)
+				time.sleep(5)
 
 class Camera1Thread(threading.Thread):
 
-        def __init__(self, deviceConnector, deviceConnectorMQTT):
-            threading.Thread.__init__(self)
+		def __init__(self, deviceConnector, deviceConnectorMQTT):
+			threading.Thread.__init__(self)
 
-        def run(self):
-            while True:
-                C1senml = deviceConnector.get_camera1()
-                msg = json.dumps(C1senml)
-                topic = "MyGreenFridge/"+str(deviceConnector.userID)+"/"+str(deviceConnector.fridgeID)+"/camera1"
-                deviceConnectorMQTT.myPublish(topic, msg)
-                time.sleep(5)
+		def run(self):
+			while True:
+				C1senml = deviceConnector.get_camera1()
+				msg = json.dumps(C1senml)
+				topic = "MyGreenFridge/"+str(deviceConnector.userID)+"/"+str(deviceConnector.fridgeID)+"/camera1"
+				deviceConnectorMQTT.myPublish(topic, msg)
+				time.sleep(5)
 
 class RegistrationThread(threading.Thread):
 
-        def __init__(self, deviceConnector, catalogIP, catalogPort):
-            threading.Thread.__init__(self)
+		def __init__(self, deviceConnector, catalogIP, catalogPort):
+			threading.Thread.__init__(self)
 
-        def run(self):
-            url = "http://"+ catalogIP + ":"+ catalogPort + "/"
-            while True:
-                
+		def run(self):
+			
+			url = "http://"+ catalogIP + ":"+ catalogPort + "/"
+			
+			while True:
 
-                ### register fridge
-                # The body required is : {"ID":"", "sensors":[], "IP": "", "port": ""}
-                dictFridge = {"ID": deviceConnector.fridgeID,
-                              "sensors":[]}
-                jsonFridge = json.dumps(dictFridge)
-                r2 = requests.put(url+"update_fridge", data=jsonFridge)
+				### register fridge on the Catalog
 
-                ### register sensors in the fridge
+				dictFridge = {"ID": deviceConnector.fridgeID,
+							  "sensors":[]}
+				jsonFridge = json.dumps(dictFridge)
+				r2 = requests.put(url+"update_fridge", data=jsonFridge)
 
-                ##### temperature sensor
-                Tsenml = deviceConnector.get_temperature()
-                Tval = ((Tsenml['e'])[0])['v']
-                dictTemp = {"sensor_ID": deviceConnector.temperatureID,
-                            "Value": Tval}
-                jsonTemp = json.dumps(dictTemp)
-                r3 = requests.post(url+"add_sensor?Fridge_ID=" + deviceConnector.fridgeID, data=jsonTemp)
+				### register sensors in the fridge on the Catalog
 
-                ##### humidity sensor
-                Hsenml = deviceConnector.get_humidity()
-                Hval = ((Hsenml['e'])[0])['v']
-                dictHum = {"sensor_ID": deviceConnector.humidityID,
-                            "Value": Hval}
-                jsonHum = json.dumps(dictHum)
-                r4 = requests.post(url+"add_sensor?Fridge_ID=" + deviceConnector.fridgeID, data=jsonHum)
+				##### temperature sensor
+				Tsenml = deviceConnector.get_temperature()
+				Tval = ((Tsenml['e'])[0])['v']
+				dictTemp = {"sensor_ID": deviceConnector.temperatureID,
+							"Value": Tval}
+				jsonTemp = json.dumps(dictTemp)
+				r3 = requests.post(url+"add_sensor?Fridge_ID=" + deviceConnector.fridgeID, data=jsonTemp)
 
-                ##### camera0
-                C0senml = deviceConnector.get_camera0()
-                C0val = ((C0senml['e'])[0])['v']
-                dictC0 = {"sensor_ID": deviceConnector.camera0ID,
-                            "Value": C0val}
-                jsonC0 = json.dumps(dictC0)
-                r5 = requests.post(url+"add_sensor?Fridge_ID=" + deviceConnector.fridgeID, data=jsonC0)
+				##### humidity sensor
+				Hsenml = deviceConnector.get_humidity()
+				Hval = ((Hsenml['e'])[0])['v']
+				dictHum = {"sensor_ID": deviceConnector.humidityID,
+							"Value": Hval}
+				jsonHum = json.dumps(dictHum)
+				r4 = requests.post(url+"add_sensor?Fridge_ID=" + deviceConnector.fridgeID, data=jsonHum)
 
-                ##### camera1
-                C1senml = deviceConnector.get_camera1()
-                C1val = ((C1senml['e'])[0])['v']
-                dictC1 = {"sensor_ID": deviceConnector.camera1ID,
-                            "Value": C1val}
-                jsonC1 = json.dumps(dictC1)
-                r6 = requests.post(url+"add_sensor?Fridge_ID=" + deviceConnector.fridgeID, data=jsonC1)
+				##### camera0
+				C0senml = deviceConnector.get_camera0()
+				C0val = ((C0senml['e'])[0])['v']
+				dictC0 = {"sensor_ID": deviceConnector.camera0ID,
+							"Value": C0val}
+				jsonC0 = json.dumps(dictC0)
+				r5 = requests.post(url+"add_sensor?Fridge_ID=" + deviceConnector.fridgeID, data=jsonC0)
+
+				##### camera1
+				C1senml = deviceConnector.get_camera1()
+				C1val = ((C1senml['e'])[0])['v']
+				dictC1 = {"sensor_ID": deviceConnector.camera1ID,
+							"Value": C1val}
+				jsonC1 = json.dumps(dictC1)
+				r6 = requests.post(url+"add_sensor?Fridge_ID=" + deviceConnector.fridgeID, data=jsonC1)
 
 
-                ### register DeviceConnectorWS as a web service
-                dictWS = {"name": ("DeviceConnectorWS_"+ deviceConnector.userID + "_" + deviceConnector.fridgeID),
-                                    "IP": deviceConnector.ip,
-                                    "port": deviceConnector.port}
-                jsonWS = json.dumps(dictWS)
-                r8 = requests.post(url+"add_WS", data=jsonWS)
+				### register DeviceConnectorWS as a web service
+				dictWS = {"name": ("DeviceConnectorWS_"+ deviceConnector.userID + "_" + deviceConnector.fridgeID),
+									"IP": deviceConnector.ip,
+									"port": deviceConnector.port}
+				jsonWS = json.dumps(dictWS)
+				r8 = requests.post(url+"add_WS", data=jsonWS)
 
-                print("Fridge registered.")
+				print("Fridge registered.")
 
-                time.sleep(60)
+				time.sleep(60)
 
 
 
 if __name__ == '__main__':
 
-    # get IP address of the RPI
-    s = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
-    s.connect(("8.8.8.8", 80))
-    devIP = s.getsockname()[0]
-    devPort = 8082
+	# get IP address of the RPI
+	s = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
+	s.connect(("8.8.8.8", 80))
+	devIP = s.getsockname()[0]
+	devPort = 8082
 
-    # read system configuration file
-    try:
-        configSystemFile = open("../configSystem.json", "r")
-        configSystemJson = configSystemFile.read()
-        configSystemDict = json.loads(configSystemJson)
-        configSystemFile.close()
-    except OSError:
-        sys.exit("ERROR: cannot open the system configuration file.")
+	# read system configuration file
+	try:
+		configSystemFile = open("../configSystem.json", "r")
+		configSystemJson = configSystemFile.read()
+		configSystemDict = json.loads(configSystemJson)
+		configSystemFile.close()
+	except OSError:
+		sys.exit("ERROR: cannot open the system configuration file.")
 
-    # read DeviceConnector configuration file
-    try:
-        configDevConFile = open("configDeviceConnector.json", "r")
-        configDevConJson = configDevConFile.read()
-        configDevConDict = json.loads(configDevConJson)
-        configDevConFile.close()
-    except OSError:
-        sys.exit("ERROR: cannot open the DeviceConnector configuration file.")
+	# read DeviceConnector configuration file
+	try:
+		configDevConFile = open("configDeviceConnector.json", "r")
+		configDevConJson = configDevConFile.read()
+		configDevConDict = json.loads(configDevConJson)
+		configDevConFile.close()
+	except OSError:
+		sys.exit("ERROR: cannot open the DeviceConnector configuration file.")
 
-    
-    catalogIP = configSystemDict["catalogIP"]
-    catalogPort = configSystemDict["catalogPort"]
+	
+	catalogIP = configSystemDict["catalogIP"]
+	catalogPort = configSystemDict["catalogPort"]
 
-    userID = configDevConDict["userID"]
-    fridgeID = configDevConDict["fridgeID"]
-    temperatureID = configDevConDict["temperatureID"]
-    humidityID = configDevConDict["humidityID"]
-    camera0ID = configDevConDict["camera0ID"]
-    camera1ID = configDevConDict["camera1ID"]
+	userID = configDevConDict["userID"]
+	fridgeID = configDevConDict["fridgeID"]
+	temperatureID = configDevConDict["temperatureID"]
+	humidityID = configDevConDict["humidityID"]
+	camera0ID = configDevConDict["camera0ID"]
+	camera1ID = configDevConDict["camera1ID"]
 
-    print("Catalog IP is: " + catalogIP)
-    print("Catalog port is " + catalogPort)
+	print("Catalog IP is: " + catalogIP)
+	print("Catalog port is " + catalogPort)
 
-    # retrieve the broker IP and the broker port from the Catalog
-    catalogURL = "http://" + catalogIP + ":" + catalogPort
-    try:
-        r = requests.get(catalogURL + "/broker")
-        print(r)
-        broker = r.json()
-        brokerIP = broker["broker_IP"]
-        brokerPort = broker["broker_port"]
-    except requests.RequestException as err:
-        sys.exit("ERROR: cannot retrieve the Broker IP from the Catalog.")
+	# retrieve the broker IP and the broker port from the Catalog
+	catalogURL = "http://" + catalogIP + ":" + catalogPort
+	try:
+		r = requests.get(catalogURL + "/broker")
+		print(r)
+		broker = r.json()
+		brokerIP = broker["broker_IP"]
+		brokerPort = broker["broker_port"]
+	except requests.RequestException as err:
+		sys.exit("ERROR: cannot retrieve the Broker IP from the Catalog.")
 
 
-    # instantiate a DeviceConnector object
-    deviceConnector = DeviceConnector(devIP, devPort, userID, fridgeID, temperatureID, humidityID, camera0ID, camera1ID)
+	# instantiate a DeviceConnector object
+	deviceConnector = DeviceConnector(devIP, devPort, userID, fridgeID, temperatureID, humidityID, camera0ID, camera1ID)
 
-    clientID = "DeviceConnectorWS_"+ deviceConnector.userID + "_" + deviceConnector.fridgeID
+	clientID = "DeviceConnectorWS_"+ deviceConnector.userID + "_" + deviceConnector.fridgeID
 
-    deviceConnectorMQTT = DeviceConnectorMQTT(clientID, brokerIP, brokerPort, deviceConnector)
-    deviceConnectorMQTT.start()
+	deviceConnectorMQTT = DeviceConnectorMQTT(clientID, brokerIP, brokerPort, deviceConnector)
+	deviceConnectorMQTT.start()
 
-    tempThread = TemperatureThread(deviceConnector, deviceConnectorMQTT)
-    humThread = HumidityThread(deviceConnector, deviceConnectorMQTT)
-    cam0Thread = Camera0Thread(deviceConnector, deviceConnectorMQTT)
-    cam1Thread = Camera1Thread(deviceConnector, deviceConnectorMQTT)
-    regThread = RegistrationThread(deviceConnector, catalogIP, catalogPort)
+	tempThread = TemperatureThread(deviceConnector, deviceConnectorMQTT)
+	humThread = HumidityThread(deviceConnector, deviceConnectorMQTT)
+	cam0Thread = Camera0Thread(deviceConnector, deviceConnectorMQTT)
+	cam1Thread = Camera1Thread(deviceConnector, deviceConnectorMQTT)
+	regThread = RegistrationThread(deviceConnector, catalogIP, catalogPort)
 
-    tempThread.start()
-    humThread.start()
-    cam0Thread.start()
-    cam1Thread.start()
-    regThread.start()
+	tempThread.start()
+	humThread.start()
+	cam0Thread.start()
+	cam1Thread.start()
+	regThread.start()

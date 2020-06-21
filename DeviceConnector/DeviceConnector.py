@@ -11,7 +11,6 @@ import select
 import v4l2capture
 from PIL import Image
 import pybase64
-import socket
 
 class DeviceConnector(object):
 	
@@ -118,7 +117,7 @@ class DeviceConnector(object):
 		t = time.time() # timestamp
 		
 		if image_base64 is not None:
-				v = image_base64 # value	
+			v = image_base64 # value	
 		else:
 			v = "Reading error"
 
@@ -162,7 +161,7 @@ class DeviceConnector(object):
 		t = time.time() # timestamp
 		
 		if image_base64 is not None:
-				v = image_base64 # value	
+			v = image_base64 # value	
 		else:
 			v = "Reading error"
 
