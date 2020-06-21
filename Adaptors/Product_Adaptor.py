@@ -30,22 +30,18 @@ class ProductsAdaptorREST(object):
 		return
 
 	def POST (self, *uri, **params):
-		# riceve dal telegram bot un body contenente (prod_id, fridge_id, exp date)
 
-		# POST AL CATALOG dell'exp_Date
-		# - /add_expiration?Fridge_ID=<IDFridge>&Product_ID=<IDProduct> : Add the expiration date of a specified product
-		# The body required is {"day":"", "month":"", "year":""}
 		if len(uri) == 0:
 			raise cherrypy.HTTPError(400)
 
 		json_body = cherrypy.request.body.read()
-		body = json.loads(json_body) #(exp date)
+		body = json.loads(json_body)
 		print("Expiration date:")
 		print (body)
 		if uri[0] == 'add_expiration':
 			product_ID = params['Product_ID']
 			fridge_ID = params['Fridge_ID']
-			#/add_expiration?Fridge_ID=<IDFridge>&Product_ID=<IDProduct>
+			
 			r3 = requests.post(self.catalog_URL + "add_expiration?Fridge_ID=" + fridge_ID + "&Product_ID=" + product_ID, data=json.dumps(body))
 			print("Expiration date added to fridge")
 
@@ -88,7 +84,7 @@ class ProductsAdaptorMQTT:
 	def __init__(self, clientID , userID , fridgeID ,  broker , port , catalog_IP, catalog_Port , url_barcode_WS , url_product_input_WS , url_product_output_WS):
 
 		self.broker = broker
-		self.port = port  #porta broker
+		self.port = port 
 		self.clientID = clientID
 		self.userID = userID
 		self.fridgeID = fridgeID
@@ -113,17 +109,17 @@ class ProductsAdaptorMQTT:
 		print ("Connected to broker: " + str(self.broker) + ", with result code: " + str(rc))
 
 	def mySubscribe (self, topic):
-	# if needed, you can do some computation or error-check before subscribing
+
 		print ("Subscribing to topic: " + str(topic))
-	# subscribe for a topic
+
 		self._paho_mqtt.subscribe(topic, 2)
-	# just to remember that it works also as a subscriber
+
 		self._isSubscriber = True
 
 	def myOnMessageReceived (self, paho_mqtt , userdata, msg):
-		#print("Message received: " + str(msg.payload))
-		#print("On topic: ", str(msg.topic))
+
 		print("Message received on topic: ", str(msg.topic))
+
 		# barcode_port = "8689"
 		# catalog_port = "8080"
 		# prod_in_port = "8690"
@@ -133,21 +129,13 @@ class ProductsAdaptorMQTT:
 
 			print("A new product to insert in the fridge has been received")
 
-				   # BARCODE CONVERSION WS ---- ottieni lista Prod_ID Brand
-				   # 8076809531191 EAN EXAMPLE
 			message = json.loads(msg.payload.decode("utf-8"))
-# 			EAN_IN = (msg.payload)
+
 			print(message)
 
-			# GET al barcode conversion url: - /product?EAN=<ean>
-
 			r0 = requests.get(self.url_barcode_WS + "product?EAN=" + str(message["EAN0"]))
-			prod_in = r0.json() #contiene il nome e la marca del prodotto inserito
-			print(prod_in)        #prod_in = {"product": product_name, "brand": brand}
-
-			# POST AL CATALOG per aggiungere prodotto individuato
-			# - /add_product?Fridge_ID=<IDFridge> : Add a product to the correspondant Fridge
-			# The body required is {"product_ID":"", "brand":""}
+			prod_in = r0.json() 
+			print(prod_in)        
 
 			body = {"product_ID": prod_in["product"] , "brand": prod_in["brand"]}
 
@@ -155,39 +143,22 @@ class ProductsAdaptorMQTT:
 			r1 = requests.post(catalog_url + "add_product?Fridge_ID=" + self.fridgeID, data = json.dumps(body))
 			print("Product added to Catalog")
 
-			# GET AL PROD_INPUT_WS per ricavare expiratio_date
-			# /insert_product?product_name=<name>&brands=<brand>
-
 			r2 = requests.get(self.url_product_input_WS  + "insert_product?FridgeID=" + self.fridgeID + "&userID=" + self.userID + "&product_name=" + prod_in["product"] + "&brands=" + prod_in["brand"])
 
 			print("Expiration date has been requested")
 
-			#####
 
 		if (msg.topic == "MyGreenFridge/" + self.userID + "/" + self.fridgeID + "/EAN1"):
 
 			print("A product to remove from the fridge has been received")
 
-				   # BARCODE CONVERSION
 			message = json.loads(msg.payload.decode("utf-8"))
-# 			EAN_IN = (msg.payload)
-			print(message)
-			#print(message["EAN1"])
 
-			# GET al barcode conversion url: - /product?EAN=<ean>
+			print(message)
 
 			r01 = requests.get(self.url_barcode_WS + "product?EAN=" + str(message["EAN1"]))
-			prod_out = r01.json() #contiene il nome e la marca del prodotto inserito
-			print(prod_out)         #dictOutput = {"product": product_name, "brand": brand}
-
-			# POST AL CATALOG per rimuovere prodotto individuato
-			# - #/product?Fridge_ID=<Fridge_ID>&Prod_ID=<IDProd> : Delete a product for a specified fridge.
-
-			#catalog_url_delete = "http://" + self.catalog_IP + ":" + self.catalog_Port + "/product?Fridge_ID=" + self.fridgeID + "&Prod_ID=" + prod_out["product"]
-			#r11 = requests.delete(catalog_url_delete)
-			#print("prodotto rimosso dal frigo")
-
-			# GET AL PROD_OUtPUT_WS per ottenere status
+			prod_out = r01.json() 
+			print(prod_out)       
 
 			r21 = requests.get(self.url_product_output_WS  + "delete_product?FridgeID=" + self.fridgeID + "&userID=" + self.userID + "&product_name=" + prod_out["product"] + "&brands=" + prod_out["brand"])
 
@@ -200,7 +171,7 @@ class ProductsAdaptorMQTT:
 
 	def stop (self):
 		if (self._isSubscriber):
-			# remember to unsuscribe if it is working also as subscriber
+
 			self._paho_mqtt.unsubscribe(self._topic)
 
 		self._paho_mqtt.loop_stop()
@@ -271,17 +242,12 @@ class ControlThread(threading.Thread):
 		
 			# retrieve all the fridges from the Catalog
 			r = requests.get(catalogURL + "/fridges")
-			dictCurrFridges = r.json() # fridges is a Python dictionary
+			dictCurrFridges = r.json() 
 			currFridges = []
 			for fridge in dictCurrFridges["fridges"]:
 				currFridges.append(fridge["ID"])
 
-
-			# get new fridges that have been added
 			diffFridges = list(set(currFridges) - set(oldFridges))
-
-			#listThreads = threading.enumerate()
-			#print(listThreads)
 			
 			for fridgeID in diffFridges:
 
@@ -329,7 +295,6 @@ if __name__ == '__main__':
 	regThread = RegistrationThread(catalog_IP, catalog_Port, ip, devPort)
 	regThread.start()
 
-#  richiedere porte dinamicamente
 	try:
 		r = requests.get(catalog_URL + "broker")
 		broker = r.json()
